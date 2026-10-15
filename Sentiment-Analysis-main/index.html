@@ -1,356 +1,178 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SentimentAI | Premium Review Analysis</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --text: #f8fafc;
-            --success: #22c55e;
-            --error: #ef4444;
-            --neutral: #94a3b8;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Outfit', sans-serif;
-        }
-
-        body {
-            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            padding: 2rem;
-            z-index: 1;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            animation: fadeInDown 1s ease;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            background: linear-gradient(to right, #818cf8, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        p.subtitle {
-            color: var(--neutral);
-            font-size: 1.1rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: fadeInUp 1s ease;
-        }
-
-        textarea {
-            width: 100%;
-            height: 150px;
-            background: rgba(15, 23, 42, 0.5);
-            border: 2px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 1.5rem;
-            color: white;
-            font-size: 1.1rem;
-            resize: none;
-            transition: all 0.3s ease;
-            margin-bottom: 1.5rem;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
-        }
-
-        button {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
-            filter: brightness(1.1);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        #result {
-            margin-top: 2.5rem;
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .verdict-container {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .verdict-badge {
-            display: inline-block;
-            padding: 0.5rem 1.5rem;
-            border-radius: 999px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        .verdict-text {
-            font-size: 2.5rem;
-            font-weight: 800;
-        }
-
-        .positive { color: var(--success); }
-        .negative { color: var(--error); }
-        .neutral { color: var(--neutral); }
-
-        .positive-bg { background: rgba(34, 197, 94, 0.1); color: var(--success); border: 1px solid rgba(34, 197, 94, 0.2); }
-        .negative-bg { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); }
-        .neutral-bg { background: rgba(148, 163, 184, 0.1); color: var(--neutral); border: 1px solid rgba(148, 163, 184, 0.2); }
-
-        .confidence-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .bar-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .bar-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-            color: var(--neutral);
-        }
-
-        .bar-bg {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .loader {
-            display: none;
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Background blur circles */
-        .blur-circle {
-            position: fixed;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.15;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .circle-1 { top: -100px; left: -100px; background: var(--primary); }
-        .circle-2 { bottom: -100px; right: -100px; background: var(--secondary); }
-    </style>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReviewLens | Sentiment Analysis for Product Reviews</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1F7; --card:#FFFFFF; --ink:#101828; --muted:#5B6678; --line:#D5DCE8;
+  --pos:#12805C; --neg:#C8372D; --neu:#4F5F86;
+  --tone:var(--muted);
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --body:'Instrument Sans','Segoe UI',system-ui,sans-serif;
+  --spectrum:linear-gradient(90deg,#D94841 0%,#E9A15B 25%,#D9DEE7 50%,#7CC8A4 75%,#18A070 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.55;min-height:100vh;display:flex;flex-direction:column}
+body::before{content:"";display:block;height:6px;background:var(--spectrum)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;max-width:1080px;width:100%;margin:0 auto;padding:1.5rem 1.5rem 0}
+.brand{font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:-.02em}
+.tag{color:var(--muted);font-size:.95rem}
+.grid{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2.5rem;max-width:1080px;width:100%;margin:0 auto;padding:3rem 1.5rem 3rem;align-items:start}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,5.2vw,3.8rem);line-height:1;letter-spacing:-.035em;margin-bottom:1rem}
+.lede{color:var(--muted);max-width:44ch;margin-bottom:1.75rem}
+textarea{display:block;width:100%;min-height:170px;resize:vertical;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.1rem;font:inherit;font-size:1.02rem;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+textarea::placeholder{color:#8591A6}
+textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px rgba(16,24,40,.12)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;margin:.7rem 0 1.25rem}
+#count{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.samples{display:flex;gap:.5rem;flex-wrap:wrap}
+.chip{font:inherit;font-size:.85rem;font-weight:500;color:var(--ink);background:transparent;border:1.5px solid var(--line);border-radius:999px;padding:.3rem .8rem;cursor:pointer;transition:border-color .15s,background .15s}
+.chip:hover{border-color:var(--ink);background:var(--card)}
+#go{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;min-width:200px;font:inherit;font-weight:600;font-size:1.05rem;color:#fff;background:var(--ink);border:0;border-radius:10px;padding:.9rem 1.6rem;cursor:pointer;transition:transform .12s,background .15s}
+#go:hover{background:#1D2B45}
+#go:active{transform:translateY(1px)}
+#go:disabled{opacity:.7;cursor:wait}
+.spin{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+#go.loading .spin{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{font-size:.82rem;color:var(--muted);margin-top:.7rem}
+#err{display:none;margin-top:1rem;font-size:.92rem;color:var(--neg);background:#FDECEA;border-radius:8px;padding:.6rem .85rem}
+.panel{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:2rem 1.75rem 1.75rem;position:sticky;top:1.5rem}
+.panel[data-tone="positive"]{--tone:var(--pos)}
+.panel[data-tone="negative"]{--tone:var(--neg)}
+.panel[data-tone="neutral"]{--tone:var(--neu)}
+.verdict{font-family:var(--display);font-weight:800;font-size:clamp(2.6rem,6vw,4rem);line-height:1;letter-spacing:-.04em;color:var(--tone);text-transform:capitalize;transition:color .3s}
+.panel[data-tone="idle"] .verdict{color:#B4BDCC}
+.sub{color:var(--muted);margin:.5rem 0 2rem;min-height:1.5em}
+.spectrum{position:relative;height:14px;border-radius:999px;background:var(--spectrum)}
+.spectrum::before{content:"";position:absolute;left:50%;top:-5px;bottom:-5px;width:2px;background:rgba(16,24,40,.25)}
+.pin{position:absolute;top:50%;left:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--card);border:4px solid var(--tone);box-shadow:0 2px 8px rgba(16,24,40,.25);transition:left .9s cubic-bezier(.3,1.3,.5,1),border-color .3s}
+.panel[data-tone="idle"] .pin{border-color:#B4BDCC}
+.ends{display:flex;justify-content:space-between;margin-top:.6rem;font-size:.82rem;color:var(--muted)}
+.probs{margin-top:2rem;display:grid;gap:.9rem}
+.p{display:grid;grid-template-columns:78px 1fr 52px;gap:.8rem;align-items:center;font-size:.92rem}
+.p dd{font-variant-numeric:tabular-nums;text-align:right;font-weight:600}
+.bar{height:8px;border-radius:999px;background:#E8ECF3;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:999px;transition:width .9s cubic-bezier(.3,1,.5,1)}
+.bar .b-pos{background:var(--pos)} .bar .b-neg{background:var(--neg)} .bar .b-neu{background:var(--neu)}
+footer{max-width:1080px;width:100%;margin:0 auto;padding:0 1.5rem 2rem;color:var(--muted);font-size:.85rem}
+:focus-visible{outline:3px solid #2F6FEB;outline-offset:2px}
+@media (max-width:860px){
+  .grid{grid-template-columns:1fr;gap:2rem;padding-top:2rem}
+  .panel{position:static}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before{transition:none!important;animation:none!important}
+}
+</style>
 </head>
 <body>
-    <div class="blur-circle circle-1"></div>
-    <div class="blur-circle circle-2"></div>
+<header class="top">
+  <div class="brand">ReviewLens</div>
+  <div class="tag">Sentiment analysis for product reviews</div>
+</header>
 
-    <div class="container">
-        <header>
-            <h1>SentimentAI</h1>
-            <p class="subtitle">Understand the emotion behind every word.</p>
-        </header>
+<main class="grid">
+  <section>
+    <h1>Read between the stars.</h1>
+    <p class="lede">Paste a product review. ReviewLens tells you whether it leans positive, negative or somewhere in between, and how sure it is.</p>
 
-        <main class="card">
-            <textarea id="review-input" placeholder="Paste a product review here..."></textarea>
-            
-            <button id="analyze-btn">
-                <span id="btn-text">Analyze Sentiment</span>
-                <div class="loader" id="loader"></div>
-            </button>
-
-            <div id="result">
-                <div class="verdict-container">
-                    <div id="verdict-badge" class="verdict-badge">Sentiment</div>
-                    <div id="verdict-text" class="verdict-text">Neutral</div>
-                </div>
-
-                <div class="confidence-bars">
-                    <div class="bar-group">
-                        <div class="bar-info">
-                            <span>Positive</span>
-                            <span id="pos-val">0%</span>
-                        </div>
-                        <div class="bar-bg"><div id="pos-bar" class="bar-fill" style="background: var(--success); width: 0%"></div></div>
-                    </div>
-                    <div class="bar-group">
-                        <div class="bar-info">
-                            <span>Negative</span>
-                            <span id="neg-val">0%</span>
-                        </div>
-                        <div class="bar-bg"><div id="neg-bar" class="bar-fill" style="background: var(--error); width: 0%"></div></div>
-                    </div>
-                    <div class="bar-group">
-                        <div class="bar-info">
-                            <span>Neutral</span>
-                            <span id="neu-val">0%</span>
-                        </div>
-                        <div class="bar-bg"><div id="neu-bar" class="bar-fill" style="background: var(--neutral); width: 0%"></div></div>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <label for="review" class="sr" style="position:absolute;left:-9999px">Review text</label>
+    <textarea id="review" maxlength="1000" placeholder="e.g. The battery easily lasts two days, but the screen scratches way too fast."></textarea>
+    <div class="row">
+      <span id="count">0 / 1000</span>
+      <div class="samples" aria-label="Try an example">
+        <button type="button" class="chip" data-s="Absolutely love this blender. It crushes ice in seconds and cleaning is effortless.">Loved it</button>
+        <button type="button" class="chip" data-s="The camera is great but the battery barely lasts half a day, so it is hard to recommend.">Mixed</button>
+        <button type="button" class="chip" data-s="Stopped working after two days. Total waste of money and support never replied.">Regret</button>
+      </div>
     </div>
+    <button id="go" type="button"><span class="spin"></span><span id="go-text">Analyze review</span></button>
+    <p class="hint">Tip: press Ctrl + Enter to analyze.</p>
+    <p id="err" role="alert"></p>
+  </section>
 
-    <script>
-        const analyzeBtn = document.getElementById('analyze-btn');
-        const btnText = document.getElementById('btn-text');
-        const loader = document.getElementById('loader');
-        const resultSection = document.getElementById('result');
-        const input = document.getElementById('review-input');
+  <section class="panel" id="panel" data-tone="idle" aria-live="polite">
+    <div class="verdict" id="verdict">Waiting</div>
+    <p class="sub" id="sub">Your result will appear here.</p>
 
-        analyzeBtn.addEventListener('click', async () => {
-            const review = input.value.trim();
-            if (!review) return;
+    <div class="spectrum"><div class="pin" id="pin"></div></div>
+    <div class="ends"><span>Negative</span><span>Neutral</span><span>Positive</span></div>
 
-            // UI State: Loading
-            btnText.style.display = 'none';
-            loader.style.display = 'block';
-            analyzeBtn.disabled = true;
+    <dl class="probs">
+      <div class="p"><dt>Positive</dt><dd class="bar-wrap" style="text-align:left"><div class="bar"><i class="b-pos" id="bar-positive"></i></div></dd><dd id="val-positive">0%</dd></div>
+      <div class="p"><dt>Neutral</dt><dd class="bar-wrap" style="text-align:left"><div class="bar"><i class="b-neu" id="bar-neutral"></i></div></dd><dd id="val-neutral">0%</dd></div>
+      <div class="p"><dt>Negative</dt><dd class="bar-wrap" style="text-align:left"><div class="bar"><i class="b-neg" id="bar-negative"></i></div></dd><dd id="val-negative">0%</dd></div>
+    </dl>
+  </section>
+</main>
 
-            try {
-                const response = await fetch('/api/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ review })
-                });
+<footer>Hybrid model: TF-IDF + Logistic Regression, balanced with SMOTE and backed by a VADER lexicon.</footer>
 
-                const data = await response.json();
+<script>
+const $ = id => document.getElementById(id);
+const input = $('review'), go = $('go'), err = $('err'), panel = $('panel');
 
-                if (data.error) throw new Error(data.error);
+input.addEventListener('input', () => { $('count').textContent = input.value.length + ' / 1000'; });
+document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+  input.value = c.dataset.s; input.dispatchEvent(new Event('input')); analyze();
+}));
+go.addEventListener('click', analyze);
+input.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyze(); });
 
-                // UI State: Success
-                displayResults(data);
-            } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
-                btnText.style.display = 'block';
-                loader.style.display = 'none';
-                analyzeBtn.disabled = false;
-            }
-        });
+const SUB = {
+  positive: 'This review reads as happy with the product.',
+  negative: 'This review reads as unhappy with the product.',
+  neutral:  'This review is balanced or lukewarm.'
+};
 
-        function displayResults(data) {
-            const verdict = data.verdict;
-            const conf = data.confidence;
+async function analyze() {
+  const review = input.value.trim();
+  if (!review) { showError('Please type or paste a review first.'); return; }
+  err.style.display = 'none';
+  go.disabled = true; go.classList.add('loading'); $('go-text').textContent = 'Analyzing';
+  try {
+    const res = await fetch('/api/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ review })
+    });
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok || !data || data.error) throw new Error((data && data.error) || 'Server error. Please try again.');
+    render(data);
+  } catch (e) {
+    showError(e.message || 'Something went wrong.');
+  } finally {
+    go.disabled = false; go.classList.remove('loading'); $('go-text').textContent = 'Analyze review';
+  }
+}
 
-            const badge = document.getElementById('verdict-badge');
-            const text = document.getElementById('verdict-text');
+function showError(msg) { err.textContent = msg; err.style.display = 'block'; }
 
-            // Reset classes
-            badge.className = 'verdict-badge';
-            text.className = 'verdict-text';
+function render(data) {
+  const v = String(data.verdict || 'neutral').toLowerCase();
+  const c = data.confidence || {};
+  const pos = +c.positive || 0, neg = +c.negative || 0, neu = +c.neutral || 0;
 
-            // Set content and color
-            badge.textContent = verdict + ' Sentiment';
-            badge.classList.add(verdict + '-bg');
-            text.textContent = verdict.toUpperCase();
-            text.classList.add(verdict);
+  panel.dataset.tone = SUB[v] ? v : 'neutral';
+  $('verdict').textContent = v;
+  $('sub').textContent = SUB[v] || SUB.neutral;
 
-            // Update bars
-            updateBar('pos', conf.positive || 0);
-            updateBar('neg', conf.negative || 0);
-            updateBar('neu', conf.neutral || 0);
+  const x = Math.max(0, Math.min(1, (pos - neg + 1) / 2));
+  $('pin').style.left = (x * 100) + '%';
 
-            resultSection.style.display = 'block';
-        }
+  [['positive', pos], ['neutral', neu], ['negative', neg]].forEach(([k, val]) => {
+    const pct = (val * 100).toFixed(1) + '%';
+    $('val-' + k).textContent = pct;
+    $('bar-' + k).style.width = pct;
+  });
+}
+</script>
 
-        function updateBar(id, value) {
-            const valEl = document.getElementById(id + '-val');
-            const barEl = document.getElementById(id + '-bar');
-            const percent = (value * 100).toFixed(1) + '%';
-            
-            valEl.textContent = percent;
-            barEl.style.width = percent;
-        }
-    </script>
-</body>
-</html>
+
+</body></html>
